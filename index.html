@@ -49,6 +49,24 @@ button.secondary{background:#2a3a52;color:white;border:1px solid #43546d}button.
 <div class="actions"><button onclick="optimize()">रूट ठरवा</button><button class="secondary" onclick="clearAll()">सर्व हटवा</button></div>
 <div id="result" class="hidden" style="margin-top:14px"></div>
 </section>
+ 
+<section class="card">
+  <h2>⚙️ Smart Order Settings</h2>
+
+  <label>कमीत कमी ऑर्डर रक्कम (₹)</label>
+  <input id="minAmount" type="number" value="50" min="1">
+
+  <label>जास्तीत जास्त ऑर्डर रक्कम (₹)</label>
+  <input id="maxAmount" type="number" value="200" min="1">
+
+  <div class="actions">
+    <button onclick="saveOrderSettings()">सेटिंग सेव्ह करा</button>
+  </div>
+
+  <div id="settingsMsg" class="small">
+    तुमची ऑर्डर रक्कम निवडा.
+  </div>
+</section>
 <footer>Smart Rider MVP · सुरक्षितपणे वाहन थांबवूनच फोन वापरा.</footer>
 </main>
 <script>
