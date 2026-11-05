@@ -142,4 +142,40 @@ async function optimize(){
   $('result').innerHTML=`<div class="kpis"><div class="kpi"><b>${km.toFixed(1)} km*</b><span>अंदाजे सरळ अंतर</span></div><div class="kpi"><b>${approxMin} min*</b><span>प्राथमिक वेळेचा अंदाज</span></div></div><h2 style="margin-top:16px">सुचवलेला क्रम</h2>${route.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div><b>${s.type} · ${esc(s.order.platform)} ${esc(s.order.oid)}</b><small>${esc(s.type==='Pickup'?s.order.pickup:s.order.drop)}</small></div></div>`).join('')}<div style="margin-top:12px"><button style="width:100%" onclick="window.open('${maps}','_blank')">Google Maps मध्ये रूट उघडा ↗</button></div><div class="small" style="margin-top:10px">*हे फक्त प्राथमिक अंदाज आहेत; रस्त्याचे अंतर/ट्रॅफिक ETA नाहीत. Google Maps उघडल्यावर प्रत्यक्ष रूट आणि ट्रॅफिक तपासा.</div>${notes}`;
  }catch(e){$('result').innerHTML='<div class="notice">'+esc(e.message)+'</div>';}
 }
+ 
+function saveOrderSettings() {
+  const minInput = document.getElementById("minAmount");
+  const maxInput = document.getElementById("maxAmount");
+  const msg = document.getElementById("settingsMsg");
+
+  const min = Number(minInput.value);
+  const max = Number(maxInput.value);
+
+  if (!minInput.value || !maxInput.value || min < 1 || max < min) {
+    msg.textContent = "कृपया योग्य रक्कम निवडा.";
+    return;
+  }
+
+  const settings = {
+    minAmount: min,
+    maxAmount: max
+  };
+
+  localStorage.setItem(
+    "smartRiderSettings",
+    JSON.stringify(settings)
+  );
+
+  msg.textContent = "✅ तुमची सेटिंग यशस्वीपणे सेव्ह झाली!";
+}
+
+window.addEventListener("DOMContentLoaded", function() {
+  const saved = localStorage.getItem("smartRiderSettings");
+
+  if (saved) {
+    const settings = JSON.parse(saved);
+    document.getElementById("minAmount").value = settings.minAmount;
+    document.getElementById("maxAmount").value = settings.maxAmount;
+  }
+});
 </script></body></html>
