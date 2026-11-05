@@ -53,6 +53,22 @@ button.secondary{background:#2a3a52;color:white;border:1px solid #43546d}button.
 <section class="card">
   <h2>⚙️ Smart Order Settings</h2>
 
+<section class="card">
+  <h2>🚀 Smart Accept Control</h2>
+
+  <button id="autoToggle"
+    onclick="toggleAutoAccept()">
+    Auto Accept: OFF
+  </button>
+
+  <button onclick="openPorterApp()">
+    📲 Open Porter App
+  </button>
+
+  <p id="autoStatus">
+    Auto Accept बंद आहे.
+  </p>
+</section>
   <label>कमीत कमी ऑर्डर रक्कम (₹)</label>
   <input id="minAmount" type="number" value="50" min="1">
 
@@ -177,5 +193,30 @@ window.addEventListener("DOMContentLoaded", function() {
     document.getElementById("minAmount").value = settings.minAmount;
     document.getElementById("maxAmount").value = settings.maxAmount;
   }
+});
+ 
+function toggleAutoAccept() {
+  const status = localStorage.getItem("smartAutoAccept") === "true";
+  const next = !status;
+
+  localStorage.setItem("smartAutoAccept", String(next));
+
+  document.getElementById("autoToggle").textContent =
+    next ? "Auto Accept: ON" : "Auto Accept: OFF";
+
+  document.getElementById("autoStatus").textContent =
+    next ? "Auto Accept सुरू आहे (अधिकृत Integration आवश्यक)." :
+    "Auto Accept बंद आहे.";
+}
+
+function openPorterApp() {
+  window.open("https://porter.in/", "_blank");
+}
+
+window.addEventListener("DOMContentLoaded", function() {
+  const enabled = localStorage.getItem("smartAutoAccept") === "true";
+
+  document.getElementById("autoToggle").textContent =
+    enabled ? "Auto Accept: ON" : "Auto Accept: OFF";
 });
 </script></body></html>
