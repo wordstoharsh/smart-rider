@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101827"><meta name="description" content="Porter आणि WeFast delivery orders route planner"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg" type="image/svg+xml"><title>Smart Rider</title>
+<style>
+:root{--bg:#101827;--panel:#1b2638;--panel2:#243249;--text:#f4f7fb;--muted:#aebbd0;--accent:#43d6a0;--orange:#ffbd59;--red:#ff7272}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:20px 16px 14px;background:#121e30;position:sticky;top:0;z-index:3;border-bottom:1px solid #2c3a50}
+.brand{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:800}.heading{font-size:24px;font-weight:800;margin-top:3px}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+main{padding:14px;max-width:680px;margin:auto}.card{background:var(--panel);border:1px solid #2b3a50;border-radius:16px;padding:14px;margin-bottom:13px}
+h2{font-size:17px;margin:0 0 12px}.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+label{display:block;color:var(--muted);font-size:12px;margin:9px 0 5px}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #3a4a62;background:#111d2e;color:white;font:inherit;outline:none}
+button{border:0;border-radius:11px;padding:12px 14px;font-weight:750;font-size:14px;background:var(--accent);color:#082318}
+button.secondary{background:#2a3a52;color:white;border:1px solid #43546d}button.warn{background:var(--orange);color:#2b1a00}button.danger{background:#542d3a;color:#ffdce3}
+.actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1}
+.small{font-size:12px;color:var(--muted);line-height:1.5}.pill{display:inline-block;border-radius:30px;padding:4px 8px;font-size:11px;background:#2a3a52;color:#dce7f5}
+.order{border:1px solid #35465e;border-radius:12px;padding:11px;margin-top:9px}
+.order strong{font-size:14px}.order .addr{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.stop{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #304057}.stop:last-child{border:0}
+.num{width:27px;height:27px;display:grid;place-items:center;border-radius:50%;background:#2c755e;color:#baffdf;font-weight:800;flex-shrink:0}
+.stop small{display:block;color:var(--muted);margin-top:3px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi{background:#111d2e;padding:12px;border-radius:12px}.kpi b{display:block;font-size:20px;color:var(--accent)}.kpi span{font-size:11px;color:var(--muted)}
+.notice{background:#342d20;color:#ffe1a6;padding:10px;border-radius:10px;font-size:12px;line-height:1.5}
+.hidden{display:none}.muted{color:var(--muted)}footer{text-align:center;color:#8190a5;font-size:11px;padding:12px 0 30px}
+</style></head>
+<body>
+<header><div class="brand">SMART RIDER</div><div class="heading">Delivery Planner</div><div class="sub">Porter + WeFast · एकाच ठिकाणी ऑर्डर मॅनेजमेंट</div></header>
+<main>
+<section class="card">
+<h2>📍 सुरुवातीचे लोकेशन</h2>
+<div class="row"><input id="start" placeholder="उदा. सध्याचे लोकेशन / पत्ता"><button class="secondary" style="flex:0 0 auto" onclick="useLocation()">माझे लोकेशन</button></div>
+<div class="small" id="locmsg">सुरुवातीचा पत्ता टाका किंवा GPS वापरा.</div>
+</section>
+<section class="card">
+<h2>➕ नवीन ऑर्डर जोडा</h2>
+<div class="row"><div><label>प्लॅटफॉर्म</label><select id="platform"><option>Porter</option><option>WeFast</option></select></div><div><label>ऑर्डर आयडी (ऐच्छिक)</label><input id="oid" placeholder="उदा. P102"></div></div>
+<label>Pickup पत्ता</label><input id="pickup" placeholder="Pickup चे पूर्ण लोकेशन">
+<label>Drop पत्ता</label><input id="drop" placeholder="Drop चे पूर्ण लोकेशन">
+<div class="row"><div><label>Delivery deadline (ऐच्छिक)</label><input id="deadline" type="datetime-local"></div><div><label>प्राधान्य</label><select id="priority"><option value="normal">सामान्य</option><option value="high">तातडीची</option></select></div></div>
+<div class="actions"><button onclick="addOrder()">ऑर्डर जोडा</button><button class="secondary" onclick="demo()">डेमो भरा</button></div>
+<div class="small">पत्ता स्पष्ट लिहा. उदा. दुकान/इमारतीचे नाव, रस्ता, परिसर आणि शहर.</div>
+</section>
+<section class="card"><h2>📦 तुमच्या ऑर्डर्स <span class="pill" id="count">0</span></h2><div id="orders"><div class="small">अजून ऑर्डर जोडलेली नाही.</div></div></section>
+<section class="card">
+<h2>🧭 सर्वोत्तम क्रम शोधा</h2>
+<div class="notice">हा प्रोटोटाइप Pickup आधी आणि संबंधित Drop नंतर असा क्रम ठेवतो. अंतराचा प्राथमिक अंदाज सरळ रेषेवर आधारित आहे; प्रत्यक्ष रस्ते, ट्रॅफिक आणि Google Maps चा ETA वेगळा असू शकतो.</div>
+<div class="actions"><button onclick="optimize()">रूट ठरवा</button><button class="secondary" onclick="clearAll()">सर्व हटवा</button></div>
+<div id="result" class="hidden" style="margin-top:14px"></div>
+</section>
+<footer>Smart Rider MVP · सुरक्षितपणे वाहन थांबवूनच फोन वापरा.</footer>
+</main>
+<script>
+let orders=[], coords={}, current=null, sequence=[];
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function geocode(q){
+ const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q);
+ const r=await fetch(url,{headers:{'Accept-Language':'mr,en'}});
+ if(!r.ok) throw Error('लोकेशन शोधता आले नाही');
+ const a=await r.json(); if(!a.length) throw Error('हा पत्ता सापडला नाही: '+q);
+ return {lat:+a[0].lat,lon:+a[0].lon,label:a[0].display_name};
+}
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+async function useLocation(){
+ $('locmsg').textContent='GPS लोकेशन घेत आहे…';
+ if(!navigator.geolocation){$('locmsg').textContent='या डिव्हाइसमध्ये GPS उपलब्ध नाही.';return;}
+ navigator.geolocation.getCurrentPosition(async p=>{
+ current={lat:p.coords.latitude,lon:p.coords.longitude,label:'माझे सध्याचे लोकेशन'};
+ $('start').value='माझे सध्याचे लोकेशन';$('locmsg').textContent='GPS लोकेशन मिळाले.';
+ },e=>$('locmsg').textContent='GPS मिळाले नाही. पत्ता स्वतः टाका.');
+}
+async function addOrder(){
+ let p=$('pickup').value.trim(),d=$('drop').value.trim();
+ if(!p||!d){alert('Pickup आणि Drop दोन्ही पत्ते भरा.');return;}
+ let b=$('pickup').value; $('locmsg').textContent='Pickup आणि Drop लोकेशन तपासत आहे…';
+ try{
+  const [pc,dc]=await Promise.all([geocode(p),geocode(d)]);
+  orders.push({id:Date.now(),platform:$('platform').value,oid:$('oid').value.trim()||('Order '+(orders.length+1)),pickup:p,drop:d,pc,dc,deadline:$('deadline').value,priority:$('priority').value,done:false});
+  $('pickup').value='';$('drop').value='';$('oid').value='';$('deadline').value='';
+  $('locmsg').textContent='ऑर्डर जोडली. आणखी ऑर्डर जोडा किंवा रूट ठरवा.';render();
+ }catch(e){$('locmsg').textContent=e.message;alert(e.message);}
+}
+function render(){
+ $('count').textContent=orders.filter(o=>!o.done).length;
+ $('orders').innerHTML=orders.length?orders.map(o=>`<div class="order"><div class="row"><strong>${esc(o.platform)} · ${esc(o.oid)}</strong><button class="danger" style="flex:0 0 auto;padding:6px 9px" onclick="removeOrder(${o.id})">हटवा</button></div><div class="addr">🟢 Pickup: ${esc(o.pickup)}<br>🔴 Drop: ${esc(o.drop)}<br>${o.deadline?'⏰ Deadline: '+new Date(o.deadline).toLocaleString('en-IN'):''} ${o.priority==='high'?' · तातडीची':''}</div></div>`).join(''):'<div class="small">अजून ऑर्डर जोडलेली नाही.</div>';
+}
+function removeOrder(id){orders=orders.filter(o=>o.id!==id);render();}
+function clearAll(){orders=[];sequence=[];render();$('result').classList.add('hidden');}
+function demo(){
+ $('platform').value='Porter';$('oid').value='Demo 1';$('pickup').value='Andheri West, Mumbai';$('drop').value='Jogeshwari West, Mumbai';
+ $('locmsg').textContent='डेमो पत्ते भरले आहेत. प्रत्यक्ष रूटसाठी तुमचे खरे पत्ते वापरा.';
+}
+function dist(a,b){let R=6371,rad=x=>x*Math.PI/180,dl=rad(b.lat-a.lat),dn=rad(b.lon-a.lon),v=Math.sin(dl/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(v));}
+async function optimize(){
+ if(!orders.length){alert('आधी किमान एक ऑर्डर जोडा.');return;}
+ $('result').classList.remove('hidden');$('result').innerHTML='<div class="small">रूट मोजत आहे…</div>';
+ try{
+  let pos=current;
+  if(!pos){let s=$('start').value.trim();if(!s){alert('सुरुवातीचे लोकेशन टाका किंवा GPS वापरा.');return;}pos=await geocode(s);}
+  let startPos={...pos};
+  let pending=orders.filter(o=>!o.done), stops=[];
+  pending.forEach(o=>{stops.push({type:'Pickup',order:o,point:o.pc});stops.push({type:'Drop',order:o,point:o.dc});});
+  let donePick=new Set(), route=[],km=0,now=Date.now();
+  while(stops.length){
+   let eligible=stops.filter(s=>s.type==='Pickup'||donePick.has(s.order.id));
+   eligible.sort((a,b)=>{
+    let da=dist(pos,a.point),db=dist(pos,b.point);
+    let pa=a.order.priority==='high'?-1:0,pb=b.order.priority==='high'?-1:0;
+    return (da+pa*2)-(db+pb*2);
+   });
+   let next=eligible[0]; if(!next)break;
+   km+=dist(pos,next.point);pos=next.point;route.push(next);
+   if(next.type==='Pickup')donePick.add(next.order.id);
+   stops=stops.filter(s=>!(s.order.id===next.order.id&&s.type===next.type));
+  }
+  sequence=route;
+  let approxMin=Math.round((km/22)*60 + route.length*3);
+  let deadlineNotes=pending.filter(o=>o.deadline).map(o=>({o,idx:route.findIndex(s=>s.order.id===o.id&&s.type==='Drop')}));
+  let notes=deadlineNotes.map(x=>{let eta=approxMin;return `<div class="small">${esc(x.o.oid)} deadline: ${new Date(x.o.deadline).toLocaleString('en-IN')} · कृपया प्रत्यक्ष ETA तपासा.</div>`}).join('');
+  let waypoints=route.map(s=>`${s.point.lat},${s.point.lon}`);
+  let maps='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(`${startPos.lat},${startPos.lon}`)+'&destination='+encodeURIComponent(waypoints[waypoints.length-1])+'&waypoints='+encodeURIComponent(waypoints.slice(0,-1).join('|'))+'&travelmode=driving';
+  $('result').innerHTML=`<div class="kpis"><div class="kpi"><b>${km.toFixed(1)} km*</b><span>अंदाजे सरळ अंतर</span></div><div class="kpi"><b>${approxMin} min*</b><span>प्राथमिक वेळेचा अंदाज</span></div></div><h2 style="margin-top:16px">सुचवलेला क्रम</h2>${route.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div><b>${s.type} · ${esc(s.order.platform)} ${esc(s.order.oid)}</b><small>${esc(s.type==='Pickup'?s.order.pickup:s.order.drop)}</small></div></div>`).join('')}<div style="margin-top:12px"><button style="width:100%" onclick="window.open('${maps}','_blank')">Google Maps मध्ये रूट उघडा ↗</button></div><div class="small" style="margin-top:10px">*हे फक्त प्राथमिक अंदाज आहेत; रस्त्याचे अंतर/ट्रॅफिक ETA नाहीत. Google Maps उघडल्यावर प्रत्यक्ष रूट आणि ट्रॅफिक तपासा.</div>${notes}`;
+ }catch(e){$('result').innerHTML='<div class="notice">'+esc(e.message)+'</div>';}
+}
+</script></body></html>
